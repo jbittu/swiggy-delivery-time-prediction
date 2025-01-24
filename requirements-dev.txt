@@ -6,3 +6,4 @@ dagshub
 dvc
 lightgbm
 joblib
+pytest
