@@ -29,6 +29,9 @@ jobs:
       - name: Deploy Application
         run: |
           echo "Deploying to AWS"
+          
+      - name: Install DVC with S3 Support
+        run: pip install dvc[s3]
 
       - name: DVC Pull
         run: |
