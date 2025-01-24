@@ -32,7 +32,7 @@ def test_load_model_from_registry(model_name,stage):
     
     assert latest_version is not None, f"No model at {stage} stage"
     
-    # load the model
+    # load the model model
     model_path = f"models:/{model_name}/{stage}"
 
     # load the latest model from model registry
