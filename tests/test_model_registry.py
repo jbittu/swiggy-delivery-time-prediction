@@ -8,7 +8,7 @@ dagshub.init(repo_owner='jbittu',
              repo_name='swiggy-delivery-time-prediction', 
              mlflow=True)
 
-# set the mlflow tracking server
+# set the mlflow tracking server url
 mlflow.set_tracking_uri("https://dagshub.com/jbittu/swiggy-delivery-time-prediction.mlflow")
 
 
