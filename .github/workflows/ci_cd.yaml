@@ -19,6 +19,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+          pip install pytest
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -29,7 +30,7 @@ jobs:
       - name: Deploy Application
         run: |
           echo "Deploying to AWS"
-          
+
       - name: Install DVC with S3 Support
         run: pip install dvc[s3]
 
@@ -47,7 +48,7 @@ jobs:
         env:
           DAGSHUB_USER_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
         run: |
-          pytest tests/test_model_perf.py
+          pytest tests/test_model_pref.py
 
       - name: Promote Model
         if: success()
@@ -57,55 +58,55 @@ jobs:
           python scripts/promote_model_to_prod.py
           
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: eu-north-1
      
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      # - name: Login to Amazon ECR
+      #   id: login-ecr
+      #   uses: aws-actions/amazon-ecr-login@v2
 
   
-      - name: Build, tag, and push docker image to Amazon ECR
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ secrets.ECR_REPOSITORY_URI }}
-          IMAGE_TAG: latest
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+      # - name: Build, tag, and push docker image to Amazon ECR
+      #   env:
+      #     REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #     REPOSITORY: ${{ secrets.ECR_REPOSITORY_URI }}
+      #     IMAGE_TAG: latest
+      #   run: |
+      #     docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+      #     docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
       
-      # Zip the required files
-      - name: Zip files for deployment
-        if: success()
-        run: |
-            zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
+      # # Zip the required files
+      # - name: Zip files for deployment
+      #   if: success()
+      #   run: |
+      #       zip -r deployment.zip appspec.yml deploy/scripts/install_dependencies.sh deploy/scripts/start_docker.sh
 
 
-      # Upload the ZIP file to S3
-      - name: Upload ZIP to S3
-        if: success()
-        run: |
-            aws s3 cp deployment.zip s3://deliverytimepredictiondeployment/deployment.zip
+      # # Upload the ZIP file to S3
+      # - name: Upload ZIP to S3
+      #   if: success()
+      #   run: |
+      #       aws s3 cp deployment.zip s3://deliverytimepredictiondeployment/deployment.zip
 
             
-      # Deploy to AWS CodeDeploy using the uploaded ZIP file
-      - name: Deploy to AWS CodeDeploy
-        if: success()
-        run: |
-            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws deploy create-deployment \
-            --application-name deliverytimeprediction \
-            --deployment-config-name CodeDeployDefault.OneAtATime \
-            --deployment-group-name deliverytimepredictiondeploymentgroup \
-            --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
-            --file-exists-behavior OVERWRITE \
-            --region ap-south-1
+      # # Deploy to AWS CodeDeploy using the uploaded ZIP file
+      # - name: Deploy to AWS CodeDeploy
+      #   if: success()
+      #   run: |
+      #       aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #       aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #       aws deploy create-deployment \
+      #       --application-name deliverytimeprediction \
+      #       --deployment-config-name CodeDeployDefault.OneAtATime \
+      #       --deployment-group-name deliverytimepredictiondeploymentgroup \
+      #       --s3-location bucket=deliverytimepredictiondeployment,key=deployment.zip,bundleType=zip \
+      #       --file-exists-behavior OVERWRITE \
+      #       # --region eu-north-1
 
 
   
